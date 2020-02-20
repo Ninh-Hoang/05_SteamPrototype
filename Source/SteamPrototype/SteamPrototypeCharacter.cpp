@@ -7,7 +7,11 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "TimerManager.h"
+#include "Engine/EngineTypes.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ASteamPrototypeCharacter
@@ -36,7 +40,7 @@ ASteamPrototypeCharacter::ASteamPrototypeCharacter()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+	//CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
@@ -56,6 +60,7 @@ void ASteamPrototypeCharacter::SetupPlayerInputComponent(class UInputComponent* 
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ASteamPrototypeCharacter::Aim);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ASteamPrototypeCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ASteamPrototypeCharacter::MoveRight);
@@ -63,23 +68,14 @@ void ASteamPrototypeCharacter::SetupPlayerInputComponent(class UInputComponent* 
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
 	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("TurnRate", this, &ASteamPrototypeCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("LookUpRate", this, &ASteamPrototypeCharacter::LookUpAtRate);
+	//PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	//PlayerInputComponent->BindAxis("TurnRate", this, &ASteamPrototypeCharacter::TurnAtRate);
+	//PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	//PlayerInputComponent->BindAxis("LookUpRate", this, &ASteamPrototypeCharacter::LookUpAtRate);
 
 	// handle touch devices
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &ASteamPrototypeCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &ASteamPrototypeCharacter::TouchStopped);
-
-	// VR headset functionality
-	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ASteamPrototypeCharacter::OnResetVR);
-}
-
-
-void ASteamPrototypeCharacter::OnResetVR()
-{
-	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
 }
 
 void ASteamPrototypeCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
@@ -92,7 +88,7 @@ void ASteamPrototypeCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVect
 		StopJumping();
 }
 
-void ASteamPrototypeCharacter::TurnAtRate(float Rate)
+/*void ASteamPrototypeCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
@@ -102,17 +98,20 @@ void ASteamPrototypeCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
-}
+}*/
 
 void ASteamPrototypeCharacter::MoveForward(float Value)
 {
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
 		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		//const FRotator Rotation = Controller->GetControlRotation();
+		//const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 		// get forward vector
+		//const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+		const FRotator YawRotation(0,0, 0);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Direction, Value);
 	}
@@ -123,12 +122,41 @@ void ASteamPrototypeCharacter::MoveRight(float Value)
 	if ( (Controller != NULL) && (Value != 0.0f) )
 	{
 		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		//const FRotator Rotation = Controller->GetControlRotation();
+		//const FRotator YawRotation(0, Rotation.Yaw, 0);
 	
 		// get right vector 
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		//const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		const FRotator YawRotation(0, 90, 0);
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
 	}
 }
+
+void ASteamPrototypeCharacter::Aim() {
+	UE_LOG(LogTemp, Warning, TEXT("Aiming"));
+	IsAiming = !IsAiming;
+	UWorld* World = GetWorld();
+	FTimeHandlder
+	World->GetTimerManager().SetTimer()
+	FaceToCursor();
+}
+
+void ASteamPrototypeCharacter::FaceToCursor() {
+	if (Controller != NULL) {
+		APlayerController* PlayerController = Controller->CastToPlayerController();
+		FHitResult TraceResult(ForceInit);
+		PlayerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, TraceResult);
+		FRotator LookCursorRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), TraceResult.Location);
+		FRotator NewRotation = FRotator(0, LookCursorRotation.Yaw, 0);
+		Controller->SetControlRotation(NewRotation);
+		//UE_LOG(LogTemp, Warning, TEXT("%f"), LookCursorRotation.Yaw);
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("Controller is empty"));
+	}
+}
+
+
