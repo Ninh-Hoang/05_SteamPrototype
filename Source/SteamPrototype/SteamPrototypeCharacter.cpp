@@ -60,7 +60,11 @@ void ASteamPrototypeCharacter::SetupPlayerInputComponent(class UInputComponent* 
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ASteamPrototypeCharacter::Aim);
+	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ASteamPrototypeCharacter::Aim);
+
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ASteamPrototypeCharacter::Crouch);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ASteamPrototypeCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ASteamPrototypeCharacter::MoveRight);
@@ -134,14 +138,23 @@ void ASteamPrototypeCharacter::MoveRight(float Value)
 		AddMovementInput(Direction, Value);
 	}
 }
-
+	
 void ASteamPrototypeCharacter::Aim() {
-	UE_LOG(LogTemp, Warning, TEXT("Aiming"));
-	IsAiming = !IsAiming;
+	//UE_LOG(LogTemp, Warning, TEXT("Aiming"));
 	UWorld* World = GetWorld();
-	FTimeHandlder
-	World->GetTimerManager().SetTimer()
-	FaceToCursor();
+	if (!IsAiming) {
+		//bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+		GetCharacterMovement()->MaxWalkSpeed *= 0.3;
+		World->GetTimerManager().SetTimer(AimTimeHandler, this, &ASteamPrototypeCharacter::FaceToCursor, World->GetDeltaSeconds(), true);
+	}
+	else {
+		//bUseControllerRotationYaw = true;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		World->GetTimerManager().ClearTimer(AimTimeHandler);
+		GetCharacterMovement()->MaxWalkSpeed /= 0.3;
+	}
+	IsAiming = !IsAiming;
 }
 
 void ASteamPrototypeCharacter::FaceToCursor() {
@@ -155,8 +168,18 @@ void ASteamPrototypeCharacter::FaceToCursor() {
 		//UE_LOG(LogTemp, Warning, TEXT("%f"), LookCursorRotation.Yaw);
 	}
 	else {
-		UE_LOG(LogTemp, Warning, TEXT("Controller is empty"));
+		//UE_LOG(LogTemp, Warning, TEXT("Controller is empty"));
 	}
 }
 
+
+void ASteamPrototypeCharacter::Crouch() {
+	if (!IsCrouching) {
+		//UE_LOG(LogTemp, Warning, TEXT("Crouch"));
+	}
+	else {
+		//UE_LOG(LogTemp, Warning, TEXT("Stop Crouching"));
+	}
+	IsCrouching = !IsCrouching;
+}
 

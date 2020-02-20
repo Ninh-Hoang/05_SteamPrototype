@@ -32,6 +32,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
 	bool IsAiming = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
+	bool IsCrouching = false;
+
+	FTimerHandle AimTimeHandler;
+
+	float AimMoveSpeedMultiplier = 0.3;
+
 protected:
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);
@@ -39,8 +46,10 @@ protected:
 	/** Called for side to side input */
 	void MoveRight(float Value);
 
-
+	UFUNCTION()
 	void Aim();
+
+	void Crouch();
 	/** 
 	 * Called via input to turn at a given rate. 
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
