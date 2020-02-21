@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "SteamPrototypeCharacter.generated.h"
 
+
 UCLASS(config=Game)
 class ASteamPrototypeCharacter : public ACharacter
 {
@@ -80,5 +81,6 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
 };
 

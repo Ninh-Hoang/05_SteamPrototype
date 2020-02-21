@@ -12,6 +12,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "TimerManager.h"
 #include "Engine/EngineTypes.h"
+#include "FiringComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ASteamPrototypeCharacter
@@ -182,4 +183,3 @@ void ASteamPrototypeCharacter::Crouch() {
 	}
 	IsCrouching = !IsCrouching;
 }
-

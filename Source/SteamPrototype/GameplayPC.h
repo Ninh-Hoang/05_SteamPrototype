@@ -9,9 +9,22 @@
 /**
  * 
  */
+
+class UFiringComponent;
+
 UCLASS()
 class STEAMPROTOTYPE_API AGameplayPC : public APlayerController
 {
 	GENERATED_BODY()
+
+
+		AGameplayPC();
+		virtual void BeginPlay() override;
 	
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Setup")
+	UFiringComponent* FiringComponent;
+
 };
+
+
